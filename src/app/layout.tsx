@@ -5,6 +5,7 @@ import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import ClientLayout from "@/components/client-layout";
 import { SiteHeader } from "@/components/site-header";
+import { Analytics } from '@vercel/analytics/next';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,6 +38,7 @@ export default function RootLayout({
             {children}
           </ClientLayout>
         </ThemeProvider>
+         <Analytics />
       </body>
     </html>
   );

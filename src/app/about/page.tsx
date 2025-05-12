@@ -22,7 +22,7 @@ const itemVariants = {
   show: { opacity: 1, y: 0 },
 };
 
-export default function Home() {
+export default function About() {
   return (
     <motion.div
       initial="hidden"
@@ -183,13 +183,13 @@ export default function Home() {
           </div>
           <div className="flex gap-4">
             <Button variant="ghost" size="sm" asChild>
-              <a href="/about">Privacy</a>
+              <a href="#">Privacy</a>
             </Button>
             <Button variant="ghost" size="sm" asChild>
-              <a href="/about">Terms</a>
+              <a href="#">Terms</a>
             </Button>
             <Button variant="ghost" size="sm" asChild>
-              <a href="/about">Contact</a>
+              <a href="#">Contact</a>
             </Button>
           </div>
         </motion.footer>
