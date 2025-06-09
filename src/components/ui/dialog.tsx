@@ -3,8 +3,17 @@
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { XIcon } from "lucide-react"
+import { twMerge } from "tailwind-merge"
+import clsx, { type ClassValue } from "clsx"
 
-import { cn } from "@/lib/utils"
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
+function hasWidthOrMaxWidth(className?: string) {
+  return /\bw-\[|\bw-[\w-]+|\bmax-w-\[|\bmax-w-[\w-]+/.test(className ?? "")
+}
 
 function Dialog({
   ...props
@@ -27,7 +36,22 @@ function DialogPortal({
 function DialogClose({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Close>) {
-  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
+  return (
+    <DialogPrimitive.Close
+      className={cn(
+        "absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-full",
+        "bg-muted text-foreground opacity-80 transition hover:opacity-100",
+        "focus:ring-2 focus:ring-ring focus:outline-none cursor-pointer",
+        // Enhancements for light mode visibility
+        "shadow-md hover:shadow-lg",
+        "light:bg-gray-200 light:text-black light:hover:bg-gray-300"
+      )}
+      {...props}
+    >
+      <XIcon className="w-4 h-4" />
+      <span className="sr-only">Close</span>
+    </DialogPrimitive.Close>
+  );
 }
 
 function DialogOverlay({
@@ -38,7 +62,9 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out",
+        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "fixed inset-0 z-50 bg-black/80", // Darken without blur
         className
       )}
       {...props}
@@ -46,31 +72,61 @@ function DialogOverlay({
   )
 }
 
+
+interface DialogContentProps extends React.ComponentProps<typeof DialogPrimitive.Content> {
+  children: React.ReactNode
+  header?: React.ReactNode
+}
+
 function DialogContent({
   className,
   children,
+  header,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content>) {
+}: DialogContentProps) {
+  const useDefaultWidths = !hasWidthOrMaxWidth(className)
+
   return (
-    <DialogPortal data-slot="dialog-portal">
+    <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
+          useDefaultWidths && "w-full max-w-[calc(100%-2rem)] sm:max-w-lg",
+          "fixed top-1/2 left-1/2 z-50 translate-x-[-50%] translate-y-[-50%] rounded-lg border bg-background shadow-lg",
+          "data-[state=open]:animate-in data-[state=closed]:animate-out",
+          "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
+          "data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
           className
         )}
+        onWheel={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
         {...props}
       >
-        {children}
-        <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
-          <XIcon />
+        <div className="relative flex flex-col max-h-[90vh] overflow-hidden">
+          {/* Fixed Header */}
+          {header && (
+            <div className="sticky top-0 z-10 bg-background border-b px-6 pt-6 pb-4 rounded-t-lg">
+              {header}
+            </div>
+          )}
+
+          {/* Scrollable Content Area */}
+          <div className="overflow-y-auto px-6 pb-6">
+            {children}
+          </div>
+        </div>
+
+        {/* Close Button */}
+        <DialogPrimitive.Close className="absolute top-4 z-20 right-4 flex items-center justify-center w-8 h-8 rounded-full bg-muted text-foreground opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:outline-none cursor-pointer">
+          <XIcon className="w-4 h-4" />
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>
     </DialogPortal>
   )
 }
+
 
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
@@ -121,6 +177,29 @@ function DialogDescription({
   )
 }
 
+function DialogFixedHeader({
+  title,
+  description,
+  action,
+}: {
+  title: React.ReactNode
+  description?: React.ReactNode
+  action?: React.ReactNode
+}) {
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div className="flex flex-col gap-1 text-center">
+        <h2 className="text-lg font-semibold">{title}</h2>
+        {description && (
+          <p className="text-sm text-muted-foreground">{description}</p>
+        )}
+      </div>
+      {action && <div>{action}</div>}
+    </div>
+  )
+}
+
+
 export {
   Dialog,
   DialogClose,
@@ -132,4 +211,5 @@ export {
   DialogPortal,
   DialogTitle,
   DialogTrigger,
+  DialogFixedHeader,
 }

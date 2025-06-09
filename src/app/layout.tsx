@@ -1,11 +1,13 @@
-// app/layout.tsx
+import { ThemeProvider } from "next-themes";
+import { Toaster } from "sonner";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ThemeProvider } from "next-themes";
-import "./globals.css";
 import ClientLayout from "@/components/client-layout";
-import { SiteHeader } from "@/components/site-header";
+import AuthGate from "@/components/auth-gate";
+import { AuthProvider } from "@/context/auth-context";
 import { Analytics } from '@vercel/analytics/next';
+import "./globals.css";
+import { ToasterClient } from "@/components/toaster-client";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,21 +26,22 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {/* Site Header available on all pages */}
-          <SiteHeader />
-          {/* Wrap children with ClientLayout */}
-          <ClientLayout>
-            {children}
-          </ClientLayout>
+          <AuthProvider>
+            <AuthGate>
+              <ClientLayout>{children}</ClientLayout>
+            </AuthGate>
+          </AuthProvider>
+          {/* ✅ Mounting Toaster here */}
+          <ToasterClient />
         </ThemeProvider>
-         <Analytics />
+        <Analytics />
       </body>
     </html>
   );
